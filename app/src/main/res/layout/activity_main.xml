@@ -38,13 +38,13 @@
             android:textColor="@color/white"
             android:textSize="20sp" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/btnErase"
             android:layout_width="75dp"
             android:layout_height="60dp"
             android:layout_margin="5dp"
             android:padding="18dp"
-            android:background="@color/gray_200"
+            android:backgroundTint="@color/gray_200"
             android:src="@drawable/erase_24" />
 
         <Button
