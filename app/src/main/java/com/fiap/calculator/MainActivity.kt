@@ -1,15 +1,22 @@
 package com.fiap.calculator
 
-import androidx.appcompat.app.AppCompatActivity
+import android.annotation.SuppressLint
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import com.fiap.calculator.databinding.ActivityMainBinding
-
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var binding : ActivityMainBinding
+    private lateinit var binding : ActivityMainBinding
 
-    var display = ""
+    private var display = ""
+    private val operations = listOf("%", "×", "÷", "+", "-")
+    private val numbers = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
+
+    private var operation = ""
+    private var number1: Int? = null
+    private var number2: Int? = null
+    private var negative = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,51 +42,82 @@ class MainActivity : AppCompatActivity() {
         binding.btnMultiply.setOnClickListener { appendItem("×") }
         binding.btnPercentage.setOnClickListener { appendItem("%") }
 
-        // Botões que "limpam" o display
-        binding.btnErase.setOnClickListener { backspace() }
-        binding.btnCE.setOnClickListener { clearEverything() }
-
         // Outros botões
         binding.btnChangeSign.setOnClickListener { changeSign() }
-
+        binding.btnResult.setOnClickListener { calculate() }
+        binding.btnCE.setOnClickListener { clearEverything() }
     }
 
     private fun appendItem(item: String) {
-        val operations = listOf("%", "×", "÷");
-        val numbers = listOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0");
+        val isOperation = operations.any { item == it }
+        val hasOperation = operation !== ""
+        val hasNumber = number1 !== null
+        val isNumber = numbers.any { item.contains(it) }
 
-        val startsWithNumber = numbers.any { display.startsWith(it) }
-        val isOperation = operations.any { item.equals(it) }
+        if (!hasNumber && isOperation) return;
 
-        // Usuário não pode colocar uma operação antes de selecionar um número
-        if (!startsWithNumber && isOperation) {
-            return;
+        if (hasOperation && isNumber) {
+            val currentNumber2 = if (number2 !== null) number2 else ""
+            number2 = "${currentNumber2}${item}".toInt()
         }
+
+        if (!hasOperation && isNumber) {
+            val currentNumber1 = if (number1 !== null) number1 else ""
+            number1 = "${currentNumber1}${item}".toInt()
+        }
+
+        if (!hasOperation && isOperation)
+            operation = item
+
+        if (isOperation && hasOperation) return calculate();
 
         display += item
         binding.edtValue.setText(display)
     }
 
     private fun clearEverything() {
+        binding.edtValue.setText("")
+        number1 = null
+        number2 = null
+        operation = ""
         display = ""
-        binding.edtValue.setText(display)
-    }
-
-    private fun backspace() {
-        if (display.isNotEmpty()) {
-            display = display.substring(0, display.length - 1)
-            binding.edtValue.setText(display)
-        }
+        negative = false
     }
 
     private fun changeSign() {
-        if (!display.startsWith("-")) {
+        if (!negative && display !== "") {
             display = "-$display"
-            return binding.edtValue.setText(display);
+            negative = true
+            return binding.edtValue.setText(display)
         }
 
         // não caiu no if; remove o sinal de menos
         display = display.substring(1)
         binding.edtValue.setText(display)
+        negative = false
+    }
+
+    private fun calculate() {
+        var result = 0
+
+        if (number1 !== null && number2 !== null) {
+            if (operation == "+") result = number1!! + number2!!
+            if (operation == "-") result = number1!! - number2!!
+            if (operation == "÷") result = number1!! / number2!!
+            if (operation == "×") result = number1!! * number2!!
+            if (operation == "%") result = number1!! * number2!! / 100
+        }
+
+        if (negative) {
+            result -= (result * 2)
+        }
+
+        binding.edtValue.setText("$result")
+
+        number1 = result
+        number2 = null
+        operation = ""
+        display = "$result"
+        negative = result < 0
     }
 }
